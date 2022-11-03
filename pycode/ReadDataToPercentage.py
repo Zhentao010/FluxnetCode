@@ -3,7 +3,7 @@ import os
 import numpy as np
 import math
 import xlwt
-import xlrd
+import openpyxl
 
 def dayValue(fileN):
     eco = pd.read_csv(fileN);
@@ -90,56 +90,56 @@ def percentage(avermon):
 
 #写入文件函数
 def save(data, path):
-  f = xlwt.Workbook(); # 创建工作簿
-  sheet1 = f.add_sheet(u'sheet1', cell_overwrite_ok=True) # 创建sheet
-  [h, l] = data.shape # h为行数，l为列数
-  for i in range(h):
-    for j in range(l):
-        if data[i, j] != 0:            
-            sheet1.write(i, j, data[i, j])
-            
-    f.save(path)
+    f = xlwt.Workbook(); # 创建工作簿
+    sheet1 = f.add_sheet(u'sheet1', cell_overwrite_ok=True) # 创建sheet
+    [h, l] = data.shape # h为行数，l为列数
+    for i in range(h):
+        for j in range(l):
+            sheet1.write(i, j, data[i, j]);
+    f.save(path);
 
 
 
 
 #读取所需处理站点文件，返回需要读取的站点
-def siteread(path):   # path为想要读取的excel文档
-    file = xlrd.open_workbook(path); #打开想要读取的excel文档
-    sheet = file.sheet_by_index(0);
-    m = sheet.nrows;
-    n = sheet.ncols;
-    pathr = np.zeros((m-1,1));
+def siteread(pathsite):   # path为想要读取的excel文档
+    file = openpyxl.load_workbook(pathsite); #打开想要读取的excel文档
+    sheet1 = file['Sheet1'];
+    m = sheet1.max_row;
+    n = sheet1.max_column;
+    pathr = [];
     for i in range(n):
-        if sheet.cell_values(0,i) == 'fluxnetid':
-            for j in range(m):
-                pathr[m][0] = sheet.cell_values(i,j);
+        if sheet1.cell(1,i+1).value == 'fluxnetid':
+            for j in range(m-1):
+                pathr.append(sheet1.cell(j+2,i+1).value);
+        elif sheet1.cell(1,i+1).value == 'koeppen_climate':
+            a = sheet1.cell(2,i+1).value;
         else:
             continue;
-    return pathr
-            
+    return pathr, a
+
 #第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息进行自动的读取
 #需要修改的数据仅有不同的path
-path = 'F:/FLUXnet/OriginalData/FLUXNET/AllHourlyData/'  #储存原始数据的位置
-pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
-path0 = ''  #储存计算得到的原始数据月平均值文件的位置
-path1 = '' #储存百分比数据的位置
-pathr = siteread(pathsite);
-[m,n] = pathr.shape;
+path = 'F:/FLUXnet/OriginalData/FLUXNET/AllHourlyData/';  #储存原始数据的位置
+pathsite = 'C:/Users/Lenovo/Desktop/info.xlsx';
+pathr,a = siteread(pathsite);
+#pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
+a0 = os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthData/'+a);
+a1 = os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthPercentage/'+a);
+path0 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthData/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
+path1 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthPercentage/'+ a +'/';  #储存百分比数据的位置
+
+m = len(pathr);
 for csv_file in os.listdir(path):
-    for i in range(m-1):
-        if csv_file[4:10] == pathr[i][0]:
-            print(csv_file);
-            '''
+    for i in range(m):
+        if csv_file[4:10] == pathr[i]:
             dayData = dayValue(path + csv_file);
             avermon = avermonth(dayData);
             perc = percentage(avermon);
-            path2 = path0 + 'Avermon' + csv_file;
-            path3 = path1 + 'Perc_' + csv_file;
+            path2 = path0 + 'Avermon_' + csv_file[4:10] +'.xlsx';
+            path3 = path1 + 'Perc_' + csv_file[4:10] +'.xlsx';
             save(avermon,path2);
             save(perc,path3);
-            '''
-
 
 
 '''
