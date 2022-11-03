@@ -3,6 +3,7 @@ import os
 import numpy as np
 import math
 import xlwt
+import xlrd
 
 def dayValue(fileN):
     eco = pd.read_csv(fileN);
@@ -101,6 +102,48 @@ def save(data, path):
 
 
 
+
+#读取所需处理站点文件，返回需要读取的站点
+def siteread(path):   # path为想要读取的excel文档
+    file = xlrd.open_workbook(path); #打开想要读取的excel文档
+    sheet = file.sheet_by_index(0);
+    m = sheet.nrows;
+    n = sheet.ncols;
+    pathr = np.zeros((m-1,1));
+    for i in range(n):
+        if sheet.cell_values(0,i) == 'fluxnetid':
+            for j in range(m):
+                pathr[m][0] = sheet.cell_values(i,j);
+        else:
+            continue;
+    return pathr
+            
+#第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息进行自动的读取
+#需要修改的数据仅有不同的path
+path = 'F:/FLUXnet/OriginalData/FLUXNET/AllHourlyData/'  #储存原始数据的位置
+pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
+path0 = ''  #储存计算得到的原始数据月平均值文件的位置
+path1 = '' #储存百分比数据的位置
+pathr = siteread(pathsite);
+[m,n] = pathr.shape;
+for csv_file in os.listdir(path):
+    for i in range(m-1):
+        if csv_file[4:10] == pathr[i][0]:
+            print(csv_file);
+            '''
+            dayData = dayValue(path + csv_file);
+            avermon = avermonth(dayData);
+            perc = percentage(avermon);
+            path2 = path0 + 'Avermon' + csv_file;
+            path3 = path1 + 'Perc_' + csv_file;
+            save(avermon,path2);
+            save(perc,path3);
+            '''
+
+
+
+'''
+#第一版程序，需要将原始文件手动剔出放到指定问价夹下读取
 path = 'C:/Users/Lenovo/Desktop/fluxnetdata/TemperateOriginal/'
 path1 = 'C:/Users/Lenovo/Desktop/fluxnetdata/temperatePercentageMonthly/'
 for csv_file in os.listdir(path):
@@ -109,7 +152,7 @@ for csv_file in os.listdir(path):
     perc = percentage(avermon);
     path2 = path1 + 'Perc_' + csv_file;
     save(perc,path2);
-
+'''
 
     
         
