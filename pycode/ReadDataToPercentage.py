@@ -5,7 +5,7 @@ import math
 import xlwt
 import openpyxl
 
-def dayValue(fileN):
+def dayValue(fileN,variable):  #variable 为想要统计的量
     eco = pd.read_csv(fileN);
     ecom = len(eco);
     days = math.ceil(ecom/48)+1;
@@ -26,7 +26,7 @@ def dayValue(fileN):
         dayValue[0][n] = day;
         for i2 in range(48):
             if hour == dayValue[i2+1][0]:
-                dayValue[i2+1][n] = eco['RECO_NT_VUT_REF'][i1];
+                dayValue[i2+1][n] = eco[variable][i1];
             else:
                 continue;
         if hour == 2330:
@@ -120,26 +120,39 @@ def siteread(pathsite):   # path为想要读取的excel文档
 
 #第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息进行自动的读取
 #需要修改的数据仅有不同的path
-path = 'F:/FLUXnet/OriginalData/FLUXNET/AllHourlyData/';  #储存原始数据的位置
+path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
 pathsite = 'C:/Users/Lenovo/Desktop/info.xlsx';
 pathr,a = siteread(pathsite);
 #pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
-a0 = os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthData/'+a);
-a1 = os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthPercentage/'+a);
-path0 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthData/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
-path1 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/MonthPercentage/'+ a +'/';  #储存百分比数据的位置
-
+os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthData/' + a);
+os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthPercentage/' + a);
+path0 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthData/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
+path1 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthPercentage/'+ a +'/';  #储存百分比数据的位置
+os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthData/' + a);
+os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthPercentage/' + a);
+path00 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthData/' + a +'/';
+path11 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthPercentage/' + a +'/';
 m = len(pathr);
 for csv_file in os.listdir(path):
     for i in range(m):
         if csv_file[4:10] == pathr[i]:
-            dayData = dayValue(path + csv_file);
-            avermon = avermonth(dayData);
-            perc = percentage(avermon);
-            path2 = path0 + 'Avermon_' + csv_file[4:10] +'.xlsx';
-            path3 = path1 + 'Perc_' + csv_file[4:10] +'.xlsx';
-            save(avermon,path2);
-            save(perc,path3);
+            
+            dayDatae = dayValue(path + csv_file,'RECO_NT_VUT_REF');####
+            avermone = avermonth(dayDatae);                        #统计生态系统呼吸的变量
+            perce = percentage(avermone);                          ####
+            
+            dayDatat = dayValue(path + csv_file,'TA_F_MDS');       ####
+            avermont = avermonth(dayDatat);                        #统计温度变量
+            perct = percentage(avermont);                          ####
+            
+            path2 = path0 + 'Avermon_' + csv_file[4:10] +'.xls';
+            path3 = path1 + 'Perc_' + csv_file[4:10] +'.xls';
+            path21= path00 + 'Avermon_' + csv_file[4:10] +'.xls';
+            path31 = path11 + 'Perc_' + csv_file[4:10] +'.xls';
+            save(avermone,path2);
+            save(perce,path3);
+            save(avermont,path21);
+            save(perct,path31);
 
 
 '''
