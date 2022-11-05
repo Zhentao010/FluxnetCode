@@ -112,13 +112,13 @@ def siteread(pathsite):   # path为想要读取的excel文档
         if sheet1.cell(1,i+1).value == 'fluxnetid':
             for j in range(m-1):
                 pathr.append(sheet1.cell(j+2,i+1).value);
-        elif sheet1.cell(1,i+1).value == 'koeppen_climate':
+        elif sheet1.cell(1,i+1).value == 'igbp_land_use':
             a = sheet1.cell(2,i+1).value;
         else:
             continue;
     return pathr, a
 
-#第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息进行自动的读取
+#第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息文件夹进行自动的读取
 #需要修改的数据仅有不同的path
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
 pathinfo = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/'  #储存分类信息excel的文件夹
@@ -126,14 +126,14 @@ for landinfo in os.listdir(pathinfo):
     pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;  
     pathr,a = siteread(pathsite);
     #pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthData/' + a);  #创建月平均数据的文件夹
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthPercentage/' + a);    #创建月平均数据百分比的文件夹
-    path0 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthData/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
-    path1 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Respeiration/MonthPercentage/'+ a +'/';  #储存百分比数据的位置
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthData/' + a);
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthPercentage/' + a);
-    path00 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthData/' + a +'/';
-    path11 = 'D:/Data/fluxnet/TreatedData/SpacificClimateClass/Temperature/MonthPercentage/' + a +'/';
+    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthAvermon/' + a);  #创建月平均数据的文件夹
+    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthPercentage/' + a);    #创建月平均数据百分比的文件夹
+    path0 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthAvermon/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
+    path1 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthPercentage/'+ a +'/';  #储存百分比数据的位置
+    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthAvermon/' + a);
+    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthPercentage/' + a);
+    path00 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthAvermon/' + a +'/';
+    path11 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthPercentage/' + a +'/';
     m = len(pathr);
     for csv_file in os.listdir(path):
         for i in range(m):
@@ -168,7 +168,3 @@ for csv_file in os.listdir(path):
     path2 = path1 + 'Perc_' + csv_file;
     save(perc,path2);
 '''
-
-    
-        
-
