@@ -72,99 +72,25 @@ def avermonth(dayValue):
             continue;
     return avermon
 
-def percentage(avermon):
-    [avermonm, avermonn] = avermon.shape;
-    perc = np.zeros((avermonm,avermonn),dtype=(float));
-    for i in range(avermonn-1):
-        sump = 0;
-        if avermon[0][i+1] != 0:
-            for j in range(avermonm-1):
-                sump = sump + avermon[j+1][i+1];
-                for j in range(avermonm-1):
-                    perc[j+1][i+1] = avermon[j+1][i+1]/sump*100;
-                perc[0,...] = avermon[0,...];
-                perc[...,0] = avermon[...,0];
-        else:
-            continue;
-    return perc
 
-#写入文件函数
-def save(data, path):
-    f = xlwt.Workbook(); # 创建工作簿
-    sheet1 = f.add_sheet(u'sheet1', cell_overwrite_ok=True) # 创建sheet
-    [h, l] = data.shape # h为行数，l为列数
-    for i in range(h):
-        for j in range(l):
-            sheet1.write(i, j, data[i, j]);
-    f.save(path);
-
-
-
-
-#读取所需处理站点文件，返回需要读取的站点
-def siteread(pathsite):   # path为想要读取的excel文档
-    file = openpyxl.load_workbook(pathsite); #打开想要读取的excel文档
-    sheet1 = file['Sheet1'];
-    m = sheet1.max_row;
-    n = sheet1.max_column;
-    pathr = [];
-    for i in range(n):
-        if sheet1.cell(1,i+1).value == 'fluxnetid':
-            for j in range(m-1):
-                pathr.append(sheet1.cell(j+2,i+1).value);
-        elif sheet1.cell(1,i+1).value == 'igbp_land_use':
-            a = sheet1.cell(2,i+1).value;
-        else:
-            continue;
-    return pathr, a
-
-#第二版程序，不需要将输入文件分在不同的文件夹里，该程序可以根据输入excel信息文件夹进行自动的读取
-#需要修改的数据仅有不同的path
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-pathinfo = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/'  #储存分类信息excel的文件夹
-for landinfo in os.listdir(pathinfo):
-    pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;  
-    pathr,a = siteread(pathsite);
-    #pathsite = 'F:/FLUXnet/TreatedFluxNet/FluxnetInformation/fluxnet_site_info_all.xlsx'  #想要读取的站点信息excel文档，需经过筛选
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthAvermon/' + a);  #创建月平均数据的文件夹
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthPercentage/' + a);    #创建月平均数据百分比的文件夹
-    path0 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthAvermon/' + a +'/';  #储存计算得到的原始数据月平均值文件的位置
-    path1 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Respiration/monthPercentage/'+ a +'/';  #储存百分比数据的位置
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthAvermon/' + a);
-    os.mkdir(r'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthPercentage/' + a);
-    path00 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthAvermon/' + a +'/';
-    path11 = 'D:/Data/fluxnet/TreatedData/ClassLandcover/Temperature/monthPercentage/' + a +'/';
-    m = len(pathr);
-    for csv_file in os.listdir(path):
-        for i in range(m):
-            if csv_file[4:10] == pathr[i]:
-                
-                dayDatae = dayValue(path + csv_file,'RECO_NT_VUT_REF');####
-                avermone = avermonth(dayDatae);                        #统计生态系统呼吸的变量
-                perce = percentage(avermone);                          ####
-                
-                dayDatat = dayValue(path + csv_file,'TA_F_MDS');       ####
-                avermont = avermonth(dayDatat);                        #统计温度变量
-                perct = percentage(avermont);                          ####
-                
-                path2 = path0 + 'Avermon_' + csv_file[4:10] +'.xls';
-                path3 = path1 + 'Perc_' + csv_file[4:10] +'.xls';
-                path21= path00 + 'Avermon_' + csv_file[4:10] +'.xls';
-                path31 = path11 + 'Perc_' + csv_file[4:10] +'.xls';
-                save(avermone,path2);
-                save(perce,path3);
-                save(avermont,path21);
-                save(perct,path31);
-
-
-'''
-#第一版程序，需要将原始文件手动剔出放到指定问价夹下读取
-path = 'C:/Users/Lenovo/Desktop/fluxnetdata/TemperateOriginal/'
-path1 = 'C:/Users/Lenovo/Desktop/fluxnetdata/temperatePercentageMonthly/'
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/Resp平均值/';  #储存计算得到的VPD月平均值文件的位置
+#path1 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/VPD平均值/';
 for csv_file in os.listdir(path):
-    dayData = dayValue(path + csv_file);
-    avermon = avermonth(dayData);
-    perc = percentage(avermon);
-    path2 = path1 + 'Perc_' + csv_file;
-    save(perc,path2);
-'''
+    dayDataRE = dayValue(path + csv_file,'RECO_NT_VUT_REF');  ####
+    avermonRE = avermonth(dayDataRE);                         #统计RESP
+    dayDataVPD = dayValue(path + csv_file,'VPD_F_MDS');       ####
+    avermonVPD = avermonth(dayDataVPD);                       #统计VPD
+    path00 = path0 + csv_file[4:10] +'.xlsx';
+    #path11 = path1 + csv_file[4:10] +'.xlsx';
+    avermonRE_pd = pd.DataFrame(avermonRE);
+    avermonVPD_pd = pd.DataFrame(avermonVPD);
+
+    writer1 = pd.ExcelWriter(path00);
+    #writer2 = pd.ExcelWriter(path11);
+    avermonRE_pd.to_excel(writer1, sheet_name='Sheet1');
+    avermonVPD_pd.to_excel(writer1, sheet_name='Sheet2');
+    writer1.save();
+    #writer2.save();
+
+
