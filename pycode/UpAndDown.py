@@ -20,6 +20,7 @@ def dataTransfer(fileN):
     n1 = 0;
     n2 = 0;
     for i1 in range(ecom):
+       year = math.floor(eco['TIMESTAMP_START'][i1]/100000000);
        hour = eco['TIMESTAMP_START'][i1]%10000;
        if hour>=530 and hour<=1430:
            upData[n1][0] = eco['TIMESTAMP_START'][i1];
@@ -49,7 +50,7 @@ def save(data, path):
     f.save(path);
 
 
-path = 'C:/Users/Lenovo/Desktop/china/';  #储存原始数据的位置
+path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
 for csv_file in os.listdir(path):
     a = csv_file[4:10];
     path1 = 'C:/Users/Lenovo/Desktop/dayValue/' + a + '.xlsx';
