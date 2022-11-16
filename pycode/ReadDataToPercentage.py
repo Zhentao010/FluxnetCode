@@ -2,8 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 import math
-import xlwt
-import openpyxl
+
 
 def dayValue(fileN,variable):  #variable 为想要统计的量
     eco = pd.read_csv(fileN);
@@ -18,7 +17,6 @@ def dayValue(fileN,variable):  #variable 为想要统计的量
             t = t + 30;
         else:
             t = t +70;
-    
     n = 1;
     for i1 in range(ecom):
         hour = eco['TIMESTAMP_START'][i1]%10000;
@@ -74,22 +72,30 @@ def avermonth(dayValue):
 
 
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/Resp平均值/';  #储存计算得到的VPD月平均值文件的位置
-#path1 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/VPD平均值/';
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/月平均值/';  #储存计算得到的VPD月平均值文件的位置
+#path1 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/每日汇总/';
 for csv_file in os.listdir(path):
     dayDataRE = dayValue(path + csv_file,'RECO_NT_VUT_REF');  ####
-    avermonRE = avermonth(dayDataRE);                         #统计RESP
+    avermonRE = avermonth(dayDataRE);                         #统计RESP的月平均值
     dayDataVPD = dayValue(path + csv_file,'VPD_F_MDS');       ####
-    avermonVPD = avermonth(dayDataVPD);                       #统计VPD
+    avermonVPD = avermonth(dayDataVPD);                       #统计VPD月平均值
+    dayDataT = dayValue(path + csv_file,'TA_F_MDS');          ####
+    avermonT = avermonth(dayDataT);                           #统计温度的月平均值
     path00 = path0 + csv_file[4:10] +'.xlsx';
     #path11 = path1 + csv_file[4:10] +'.xlsx';
     avermonRE_pd = pd.DataFrame(avermonRE);
     avermonVPD_pd = pd.DataFrame(avermonVPD);
-
+    avermonT_pd = pd.DataFrame(avermonT);
+    
+    #dayDataRE_pd = pd.DataFrame(dayDataRE);
+    #dayDataVPD_pd = pd.DataFrame(dayDataVPD);
+    #dayDataT_pd = pd.DataFrame(dayDataT);
     writer1 = pd.ExcelWriter(path00);
     #writer2 = pd.ExcelWriter(path11);
-    avermonRE_pd.to_excel(writer1, sheet_name='Sheet1');
-    avermonVPD_pd.to_excel(writer1, sheet_name='Sheet2');
+    avermonRE_pd.to_excel(writer1, sheet_name='Respiration');
+    avermonVPD_pd.to_excel(writer1, sheet_name='VPD');
+    avermonT_pd.to_excel(writer1, sheet_name='Temperature');
+    
     writer1.save();
     #writer2.save();
 
