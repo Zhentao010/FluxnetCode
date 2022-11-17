@@ -10,7 +10,7 @@ import os
 import numpy as np
 
 
-def value(fileN):  #variable 为想要统计的量
+def value(fileN):  
     eco = pd.read_csv(fileN);
     ecom = len(eco);
 
@@ -28,7 +28,8 @@ def value(fileN):  #variable 为想要统计的量
                 dvalue[1][i2*2] = dvalue[1][i2*2] + 1;
                 b = list(dvalue[1,...]);
                 mm = max(b);
-                if mm < dvalue[1][i2*2]:
+                dvaluem = len(dvalue);
+                if mm+2 > dvaluem:
                     dvalue = np.row_stack((dvalue,a));
                
                 dvalue[int(dvalue[1][i2*2])+ 1][i2*2] = eco['VPD_F_MDS'][i1];
@@ -40,8 +41,8 @@ def value(fileN):  #variable 为想要统计的量
     return dvalue
 
 
-path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/同温度下VPD和RE/';  #储存计算得到的VPD月平均值文件的位置
+path = 'D:/Data/FLUXnet/OriginalData/FLUXNET/AllHourlyData/';  #储存原始数据的位置
+path0 = 'C:/Users/111/Desktop/处理后数据/同一温度下的VPD和RESP/';  #储存计算得到的VPD月平均值文件的位置
 
 for csv_file in os.listdir(path):
     dvalue = value(path + csv_file);  ####
