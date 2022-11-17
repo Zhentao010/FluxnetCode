@@ -80,12 +80,26 @@ def regression(dvalue):
             slope[0][i] = k[0];
     return slope
 
+
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/夜间vpd和re/';  #储存计算得到的VPD月平均值文件的位置
-path1 = 'C:/Users/Lenovo/Desktop/'
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/Vpd和RE/';  #储存计算得到的VPD月平均值文件的位置
+path1 = 'C:/Users/Lenovo/Desktop/';
+
+T0 = -15;
+Tn = 45;
+dt = 0.5;
+n = 2*int((Tn - T0)/dt + 1);
+
+T = T0;
+slope = np.zeros((1,int(n/2)));
+for i in range(int(n/2)):
+    slope[0][i] = T;
+    T = T + dt;
+        
+
 for csv_file in os.listdir(path):
     dnightdata = nightdata(path + csv_file);
-    dvalue = value(dnightdata,-15,45,0.5); ####注意！ 1/dt要为整数
+    dvalue = value(dnightdata,T0,Tn,dt); ####注意！ 1/dt要为整数
                                            #统计同一温度下的re和vpd
     #将统计的数据保存
     path00 = path0 + csv_file[4:10] +'.xlsx';
@@ -93,17 +107,12 @@ for csv_file in os.listdir(path):
     writer1 = pd.ExcelWriter(path00);
     dvalue_pd.to_excel(writer1, sheet_name='VPD+RESP');
     writer1.save();
-    
+
     #计算回归系数并汇总
-    [m,n] = dvalue.shape;
-    slope = np.zeros((1,int(n/2)));
-    for i in range(int(n/2)):
-        slope[0][i] = dvalue[0][2*i];        
     #求回归系数
     slopei = regression(dvalue);
     print(slopei);
     slope = np.row_stack((slope,slopei));
-
 
 path11 = 'C:/Users/Lenovo/Desktop/slope.xlsx'
 slope_pd = pd.DataFrame(slope);
