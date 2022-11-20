@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 16 22:42:25 2022
+Created on Sat Nov 19 21:46:15 2022
 
 @author: Lenovo
 """
 
-'''
-统计夜间同一温度下的VPD和RESP数据
-'''
 
 import pandas as pd
 import os
 import numpy as np
 from sklearn import linear_model 
+from scipy.stats import spearmanr
 
 def VPDREdata(fileN):
     eco = pd.read_csv(fileN);
@@ -65,7 +63,7 @@ def value(nightdata,T0,Tn,dt):
     return dvalue
 
 
-def regression(dvalue):
+def rank(dvalue):
     [m,n] = dvalue.shape;
     slope = np.zeros((1,int(n/2)));
     for i in range(int(n/2)):
@@ -75,18 +73,16 @@ def regression(dvalue):
             if dvalue[i1][2*i+1] != 0:
                a.append(dvalue[i1][2*i]);
                b.append(dvalue[i1][2*i+1]);
-        regr = linear_model.LinearRegression();
         a = np.array(a);
         b = np.array(b);
         if len(a) != 0:
-            regr.fit(a.reshape(-1,1),b);
-            k = regr.coef_;
-            slope[0][i] = k[0];
+            coef, p= spearmanr(a, b);
+            slope[0][i] = coef;
     return slope
 
 
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/Vpd和RE_allday/';  #储存计算得到的VPD月平均值文件的位置
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/Vpd和RE_Allday_Rank/';  #储存计算得到的VPD月平均值文件的位置
 path1 = 'C:/Users/Lenovo/Desktop/';
 
 T0 = -20;
@@ -114,13 +110,12 @@ for csv_file in os.listdir(path):
 
     #计算回归系数并汇总
     #求回归系数
-    slopei = regression(dvalue);
+    slopei = rank(dvalue);
     print(slopei);
     slope = np.row_stack((slope,slopei));
 
-path11 = 'C:/Users/Lenovo/Desktop/slope0.25.xlsx'
+path11 = 'C:/Users/Lenovo/Desktop/Rank0.5.xlsx'
 slope_pd = pd.DataFrame(slope);
 writer2 = pd.ExcelWriter(path11);
-slope_pd.to_excel(writer2, sheet_name='slope');
+slope_pd.to_excel(writer2, sheet_name='Rank');
 writer2.save();
-
