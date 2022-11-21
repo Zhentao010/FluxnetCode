@@ -72,31 +72,18 @@ def avermonth(dayValue):
 
 
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/月平均值/';  #储存计算得到的VPD月平均值文件的位置
-#path1 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/每日汇总/';
-for csv_file in os.listdir(path):
-    dayDataRE = dayValue(path + csv_file,'RECO_NT_VUT_REF');  ####
-    avermonRE = avermonth(dayDataRE);                         #统计RESP的月平均值
-    dayDataVPD = dayValue(path + csv_file,'VPD_F_MDS');       ####
-    avermonVPD = avermonth(dayDataVPD);                       #统计VPD月平均值
-    dayDataT = dayValue(path + csv_file,'TA_F_MDS');          ####
-    avermonT = avermonth(dayDataT);                           #统计温度的月平均值
-    path00 = path0 + csv_file[4:10] +'.xlsx';
-    #path11 = path1 + csv_file[4:10] +'.xlsx';
-    avermonRE_pd = pd.DataFrame(avermonRE);
-    avermonVPD_pd = pd.DataFrame(avermonVPD);
-    avermonT_pd = pd.DataFrame(avermonT);
-    
-    #dayDataRE_pd = pd.DataFrame(dayDataRE);
-    #dayDataVPD_pd = pd.DataFrame(dayDataVPD);
-    #dayDataT_pd = pd.DataFrame(dayDataT);
-    writer1 = pd.ExcelWriter(path00);
-    #writer2 = pd.ExcelWriter(path11);
-    avermonRE_pd.to_excel(writer1, sheet_name='Respiration');
-    avermonVPD_pd.to_excel(writer1, sheet_name='VPD');
-    avermonT_pd.to_excel(writer1, sheet_name='Temperature');
-    
-    writer1.save();
-    #writer2.save();
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/土壤水分月平均值/';  #储存计算得到的VPD月平均值文件的位置
 
+for csv_file in os.listdir(path):
+    eco = pd.read_csv(path + csv_file);
+    if 'SWC_F_MDS_1' in eco.columns:
+        dayDataSWC = dayValue(path + csv_file,'SWC_F_MDS_1');  ##
+        avermonSWC = avermonth(dayDataSWC);                    #统计RESP的月平均值
+                                                               #统计温度的月平均值
+        path00 = path0 + csv_file[4:10] +'.xlsx';
+        avermonSWC_pd = pd.DataFrame(avermonSWC);
+                                                           
+        writer1 = pd.ExcelWriter(path00);
+        avermonSWC_pd.to_excel(writer1, sheet_name='SWC');
+        writer1.save();
 
