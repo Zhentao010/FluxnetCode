@@ -154,8 +154,8 @@ def siteread(pathsite):   # path为想要读取的excel文档
 
 #----------------------------------------------------------------------------------------------------------------------------------
 pathinfo = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/';  #储存分类信息excel的文件夹
-#path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path = 'C:/Users/Lenovo/Desktop/test/'
+path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
+
 T0 = -5; 
 Tn = 35;
 dT = 10;
@@ -169,14 +169,14 @@ E = addE = np.zeros((6,n2+2));
 nE = 1;
 
 for landinfo in os.listdir(pathinfo):
-    pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;  
+    pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;
     pathsiteid,a = siteread(pathsite);
     m = len(pathsiteid);
     
     E = np.zeros((2,n1*n2));           #储存活化能计算结果
     result = np.zeros((6, n1*n2*2));   #第一行温度范围，第二行vpd范围
     addre = np.zeros((1, n1*n2*2));
-       
+
     for i in range(n1):
         E[0][n2*i] = T0 + i*dT;
         for j in range(n2):
@@ -191,7 +191,7 @@ for landinfo in os.listdir(pathinfo):
         for i in range(m):
             if csv_file[4:10] == pathsiteid[i]:
                 dTRE = TREdata(path + csv_file);        ##读取原始数据
-                dSameT = SameTvalue(dTRE,T0,Tn,dT);     ##统计同一温度下的T、RE和vpd                
+                dSameT = SameTvalue(dTRE,T0,Tn,dT);     ##统计同一温度范围下的T、RE和vpd                
                 for i1 in range(n1):
                     parti1 =  part(dSameT,i1); 
                     dSameVPD = SameVPDvalue(parti1, vpd0, vpdn, dvpd);
@@ -202,8 +202,8 @@ for landinfo in os.listdir(pathinfo):
                                 result[2][i1*n2*2 + 2*i2] = result[2][i1*n2*2 + 2*i2] + 1;    #第三行用来储存该VPD范围有多少数据
                                 b = list(result[2,...]);
                                 mm = max(b);
-                                [m,n] = result.shape;
-                                if mm + 3 > m:
+                                [mre,nre] = result.shape;
+                                if mm + 3 > mre:
                                     result = np.row_stack((result,addre));
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2] = dSameVPD[i3+2][i2*2];
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2 +1] = dSameVPD[i3+2][i2*2+1];
@@ -212,10 +212,10 @@ for landinfo in os.listdir(pathinfo):
     E = np.row_stack((E,Ei));
 
     #将统计的数据保存
-    path00 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.xlsx';
+    path00 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.csv';
     result_pd = pd.DataFrame(result);
-    writer1 = pd.ExcelWriter(path00);
-    result_pd.to_excel(writer1, sheet_name='sheet1');
+    result_pd.to_csv(path00, index= False, header= False)
+
 
 path11 = 'C:/Users/Lenovo/Desktop/E.xlsx';
 E_pd = pd.DataFrame(E);
