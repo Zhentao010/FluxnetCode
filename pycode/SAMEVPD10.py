@@ -27,12 +27,12 @@ def TREdata(fileN):      #d读取源文件中的VPD、T和RESP
     a = np.zeros((1,3));
     n1 = 0;
     for i1 in range(ecom):
-       if eco['TA_F_MDS'][i1]!=-9999 and eco['VPD_F_MDS'][i1]!=-9999 and eco['RECO_NT_VUT_REF'][i1]!=-9999 and eco['RECO_NT_VUT_REF'][i1]!=0:
-           data[n1][0] = 1000/(eco['TA_F_MDS'][i1]+273);
-           data[n1][1] = eco['VPD_F_MDS'][i1];
-           data[n1][2] = np.log(eco['RECO_NT_VUT_REF'][i1]);
-           data = np.row_stack((data,a));
-           n1 = n1 + 1;
+        if eco['TA_F_MDS'][i1]!=-9999 and eco['VPD_F_MDS'][i1]!=-9999 and eco['RECO_NT_VUT_REF'][i1]!=-9999 and eco['RECO_NT_VUT_REF'][i1]!=0:
+            data[n1][0] = 1000/(eco['TA_F_MDS'][i1]+273);
+            data[n1][1] = eco['VPD_F_MDS'][i1];
+            data[n1][2] = np.log(eco['RECO_NT_VUT_REF'][i1]);
+            data = np.row_stack((data,a));
+            n1 = n1 + 1;
     return data       #第一列T，第二列VPD，第三列RESP
 #----------------------------------------------------------------------------------------------------------------------------------
 
@@ -195,7 +195,7 @@ for landinfo in os.listdir(pathinfo):
                 for i1 in range(n1):
                     parti1 =  part(dSameT,i1); 
                     dSameVPD = SameVPDvalue(parti1, vpd0, vpdn, dvpd);
-                    [nds, mds] = dSameVPD.shape;
+                    [mds, nds] = dSameVPD.shape;
                     for i2 in range(n2):
                         for i3 in range(mds-2):
                             if dSameVPD[i3+2][i2*2] != 0 and dSameVPD[i3+2][i2*2+1] != 0:
@@ -208,13 +208,15 @@ for landinfo in os.listdir(pathinfo):
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2] = dSameVPD[i3+2][i2*2];
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2 +1] = dSameVPD[i3+2][i2*2+1];
 
+    
+    path00 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.csv';
+    result_pd = pd.DataFrame(result);
+    result_pd.to_csv(path00, index= False, header= False)
     Ei = regression(result);
     E = np.row_stack((E,Ei));
 
     #将统计的数据保存
-    path00 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.csv';
-    result_pd = pd.DataFrame(result);
-    result_pd.to_csv(path00, index= False, header= False)
+
 
 
 path11 = 'C:/Users/Lenovo/Desktop/E.xlsx';
