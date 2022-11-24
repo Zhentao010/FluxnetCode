@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov 21 22:59:42 2022
+Created on Thu Nov 24 10:58:30 2022
 
 @author: Lenovo
 """
@@ -20,6 +20,7 @@ import openpyxl
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
+''' 读取初始文件中的温度、vpd和呼吸速率数据，将无效数据进行剔除'''
 def TREdata(fileN):      #d读取源文件中的VPD、T和RESP
     eco = pd.read_csv(fileN);
     ecom = len(eco);
@@ -39,7 +40,8 @@ def TREdata(fileN):      #d读取源文件中的VPD、T和RESP
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
-def SameTvalue(data,T0,Tn,dT,dt):          #读取同一T范围内的T和RESP  T0 = -5, Tn = 35, dT = 10
+''' 读取某一温度范围的T、vpd和呼吸速率数据'''
+def SameTvalue(data,T0,Tn,dT,dt):          #读取同一T范围内的T和RESP
     l = int((Tn - T0)/dT + 1);             #dT表示所取的温度间隔，dt表示精度
     ecom = len(data);
     value = np.zeros((10,3*l),dtype = float);
@@ -52,7 +54,7 @@ def SameTvalue(data,T0,Tn,dT,dt):          #读取同一T范围内的T和RESP  T
     
     for i1 in range(ecom):
         for i2 in range(l):
-            if data[i1][0] >= value[0][i2*3] - dt/2 and data[i1][0] < value[0][i2*3] + dt/2:
+            if data[i1][0] >= value[0][i2*3] - dt/2 and data[i1][0] <= value[0][i2*3] + dt/2:
                 value[1][i2*3] = value[1][i2*3] + 1;
                 b = list(value[1,...]);
                 mm = max(b);
@@ -68,6 +70,7 @@ def SameTvalue(data,T0,Tn,dT,dt):          #读取同一T范围内的T和RESP  T
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
+'''将某一温度范围的数据提取出来供samevpddata函数处理 '''
 def part(data,i):                 #此处data来自于SameTvalue，将SameTvalue得到的数据拆分
     m =  data[1][i*3];            #i表示第i个温度范围
     tdata = np.zeros((int(m),3));
@@ -81,8 +84,9 @@ def part(data,i):                 #此处data来自于SameTvalue，将SameTvalue
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
-def SameVPDvalue(data,vpd0,vpdn,dvpd):          #读取同一VPD范围内的T和RESP,data来自与part里的tdata
-    l = int((vpdn - vpd0)/dvpd + 1);
+'''将提取到的某一温度范围的数据根据vpd范围进行划分 '''
+def SameVPDvalue(data,vpd0,vpdn,dVPD,dvpd):          #读取同一VPD范围内的T和RESP,data来自与part里的tdata
+    l = int((vpdn - vpd0)/dVPD + 1);                 ##dVPD为两温度间隔，dvpd为精度
     ecom = len(data);
     value = np.zeros((10,2*l),dtype = float);
     a = np.zeros((1,2*l));
@@ -90,11 +94,11 @@ def SameVPDvalue(data,vpd0,vpdn,dvpd):          #读取同一VPD范围内的T和
     vpd = vpd0;
     for i0 in range(l):
         value[0][i0*2] = vpd;
-        vpd = vpd + dvpd;
+        vpd = vpd + dVPD;
     
     for i1 in range(ecom):
         for i2 in range(l):
-            if data[i1][0] >= value[0][i2*2] - dvpd/2 and data[i1][0] < value[0][i2*2] + dvpd/2:
+            if data[i1][0] >= value[0][i2*2] - dvpd/2 and data[i1][0] <= value[0][i2*2] + dvpd/2:
                 if data[i1][1] != -9999 and data[i1][2] !=0 and data[i1][2] != -9999:
                     value[1][i2*2] = value[1][i2*2] + 1;
                     b = list(value[1,...]);
@@ -106,7 +110,6 @@ def SameVPDvalue(data,vpd0,vpdn,dvpd):          #读取同一VPD范围内的T和
                     value[int(value[1][i2*2])+ 1][i2*2 + 1] = data[i1][2];
     return value               #第一列T，第二列RESP
 #----------------------------------------------------------------------------------------------------------------------------------
-
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
@@ -132,7 +135,7 @@ def regression(value):
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
-#读取所需处理站点文件，返回需要读取的站点
+'''读取所需处理站点文件，返回需要读取的站点'''
 def siteread(pathsite):   # path为想要读取的excel文档
     file = openpyxl.load_workbook(pathsite); #打开想要读取的excel文档
     sheet1 = file['Sheet1'];
@@ -153,35 +156,62 @@ def siteread(pathsite):   # path为想要读取的excel文档
 
 
 #----------------------------------------------------------------------------------------------------------------------------------
+'''求取平均值，最终结果放入average中'''
+def average(result,T0,Tn,dT,vpd0,vpdn,dVPD):
+    
+    n1 = int((Tn - T0)/dT +1);
+    n2 = int((vpdn - vpd0)/dVPD + 1); 
+    average = np.zeros((n2+1,n1+1));
+    
+    for i in range(n1):
+        average[0][i+1] = T0 + dT*i;
+        
+    for i in range(n2):
+        average[i+1][0] = vpd0 + dVPD*i;
+        
+    [m,n] = result.shape;
+    for i in range(n1):
+        a = 0;
+        for j in range(n2):
+            for k in range(int(result[2][2*j])):
+                a = a + result[k+3][2*j+1];
+            if int(result[2][2*j]) != 0:
+                avera = a/int(result[2][2*j]);
+                average[i+1][j+1] = avera;
+    return average
+    
+
+
+#----------------------------------------------------------------------------------------------------------------------------------
+
+
+'''
+
+主函数
+
+'''
+
 pathinfo = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/';  #储存分类信息excel的文件夹
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
 
-T0 = -5; 
-Tn = 35;
-dT = 10;
-dt = 2;
-vpd0 = 1;
-vpdn = 35;
-dvpd = 2;
+T0 = -10; 
+Tn = 40;
+dT = 2;
+dt = 0.02;
+vpd0 = 0;
+vpdn = 30;
+dVPD = 5;
+dvpd = 0.02;
 n1 = int((Tn - T0)/dT +1);
-n2 = int((vpdn - vpd0)/dvpd + 1); 
-
-E = addE = np.zeros((6,n2+2));
-nE = 1;
+n2 = int((vpdn - vpd0)/dVPD + 1); 
 
 for landinfo in os.listdir(pathinfo):
     pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;
     pathsiteid,a = siteread(pathsite);
     m = len(pathsiteid);
     
-    E = np.zeros((2,n1*n2));           #储存活化能计算结果
     result = np.zeros((6, n1*n2*2));   #第一行温度范围，第二行vpd范围
     addre = np.zeros((1, n1*n2*2));
-
-    for i in range(n1):
-        E[0][n2*i] = T0 + i*dT;
-        for j in range(n2):
-            E[1][i*n2+j] = vpd0 + j*dvpd; 
     
     for i in range(n1):
         result[0][n2*2*i] = T0 + i*dT;
@@ -195,11 +225,11 @@ for landinfo in os.listdir(pathinfo):
                 dSameT = SameTvalue(dTRE,T0,Tn,dT,dt);     ##统计同一温度范围下的T、RE和vpd                
                 for i1 in range(n1):
                     parti1 =  part(dSameT,i1); 
-                    dSameVPD = SameVPDvalue(parti1, vpd0, vpdn, dvpd);       ##统计同一VPD下的T和RESP
+                    dSameVPD = SameVPDvalue(parti1, vpd0, vpdn, dVPD, dvpd);       ##统计同一VPD下的T和RESP
                     [mds, nds] = dSameVPD.shape;
                     for i2 in range(n2):
                         for i3 in range(mds-2):
-                            if dSameVPD[i3+2][i2*2] != 0 and dSameVPD[i3+2][i2*2+1] != 0:
+                            if dSameVPD[i3+2][i2*2] != 0 and dSameVPD[i3+2][i2*2+1] != 0 and dSameVPD[i3+2][i2*2+1]>-10:
                                 result[2][i1*n2*2 + 2*i2] = result[2][i1*n2*2 + 2*i2] + 1;    #第三行用来储存该VPD范围有多少数据
                                 b = list(result[2,...]);
                                 mm = max(b);
@@ -209,20 +239,15 @@ for landinfo in os.listdir(pathinfo):
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2] = 1000/(dSameVPD[i3+2][i2*2] + 273 );
                                 result[ int(result[2][i1*n2*2 + 2*i2]) + 2 ][i1*n2*2 + 2*i2 +1] = dSameVPD[i3+2][i2*2+1];
 
-    
+    #将统计的数据保存
     path00 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.csv';
     result_pd = pd.DataFrame(result);
     result_pd.to_csv(path00, index= False, header= False)
-    Ei = regression(result);
-    E = np.row_stack((E,Ei));
+    #将统计好的数据计算平均值
+    path11 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/不同植被类型不同温度范围同一VPD的T及RESP/' + a + '.csv';
+    daverage = average(result,T0,Tn,dT,vpd0,vpdn,dVPD);
+    daverage_pd = pd.DataFrame(daverage);
+    daverage_pd.to_csv(path11, index= False, header= False)
 
-    #将统计的数据保存
-
-
-path11 = 'C:/Users/Lenovo/Desktop/E.xlsx';
-E_pd = pd.DataFrame(E);
-writer2 = pd.ExcelWriter(path11);
-E_pd.to_excel(writer2, sheet_name='sheet1');
 #----------------------------------------------------------------------------------------------------------------------------------
-
 
