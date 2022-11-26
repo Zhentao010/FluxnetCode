@@ -13,6 +13,8 @@ import pandas as pd
 import os
 import numpy as np
 from sklearn import linear_model 
+import openpyxl
+
 
 def TREdata(fileN):
     eco = pd.read_csv(fileN);
@@ -30,9 +32,9 @@ def TREdata(fileN):
     return data
 
 
-def value(data,vpd0,vpdn,dvpd):  
+def value(data,vpd0,vpdn,dVPD,dvpd):  
     
-    l = int((vpdn - vpd0)/dvpd + 1);
+    l = int((vpdn - vpd0)/dVPD + 1);
     ecom = len(data);
     value = np.zeros((10,2*l),dtype = float);
     a = np.zeros((1,2*l));
@@ -40,7 +42,7 @@ def value(data,vpd0,vpdn,dvpd):
     vpd = vpd0;
     for i0 in range(l):
         value[0][i0*2] = vpd;
-        vpd = vpd + dvpd;
+        vpd = vpd + dVPD;
     
     for i1 in range(ecom):
         for i2 in range(l):
@@ -55,7 +57,6 @@ def value(data,vpd0,vpdn,dvpd):
                     value[int(value[1][i2*2])+ 1][i2*2] = data[i1][1];
                     value[int(value[1][i2*2])+ 1][i2*2 + 1] = data[i1][2];
     return value
-
 
 def regression(value):
     [m,n] = value.shape;
@@ -76,42 +77,71 @@ def regression(value):
             slope[0][i] = -k[0]*8.62/100;
     return slope
 
+#----------------------------------------------------------------------------------------------------------------------------------
+'''读取所需处理站点文件，返回需要读取的站点'''
+def siteread(pathsite):   # path为想要读取的excel文档
+    file = openpyxl.load_workbook(pathsite); #打开想要读取的excel文档
+    sheet1 = file['Sheet1'];
+    m = sheet1.max_row;
+    n = sheet1.max_column;
+    pathr = [];
+    for i in range(n):
+        if sheet1.cell(1,i+1).value == 'fluxnetid':
+            for j in range(m-1):
+                pathr.append(sheet1.cell(j+2,i+1).value);
+        elif sheet1.cell(1,i+1).value == 'igbp_land_use':
+            a = sheet1.cell(2,i+1).value;
+        else:
+            continue;
+    return pathr, a         #a为植被类型，pathr为站点信息
 
+
+pathinfo = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/';  #储存分类信息excel的文件夹
 path = 'D:/Data/fluxnet/OriginalData/AllHourlyData/';  #储存原始数据的位置
-path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/同一VPD/';  #储存计算得到的VPD月平均值文件的位置
+path0 = 'C:/Users/Lenovo/Desktop/未划分年份的初级数据/同VPD点精度2/';  #储存计算得到的VPD月平均值文件的位置
 path1 = 'C:/Users/Lenovo/Desktop/';
+
 
 vpd0 = 0;
 vpdn = 40;
+dVPD = 5;
 dvpd = 2;
-n = 2*int((vpdn - vpd0)/dvpd + 1);
+nvpd = int((vpdn - vpd0)/dVPD + 1); 
 
-vpd = vpd0;
-slope = np.zeros((1,int(n/2)));
 
-for i in range(int(n/2)):
-    slope[0][i] = vpd;
-    vpd = vpd + dvpd;
-        
-for csv_file in os.listdir(path):
-    ddata = TREdata(path + csv_file);
-    dvalue = value(ddata,vpd0,vpdn,dvpd);   ####注意！ 1/dt要为整数
-                                           #统计同一温度下的re和vpd
+for landinfo in os.listdir(pathinfo):
+    pathsite = 'D:/Data/fluxnet/TreatedData/ClassLandcover/LandCoverinfo/' + landinfo;
+    pathsiteid,a = siteread(pathsite);
+    m = len(pathsiteid);
+    result = np.zeros((6, nvpd*2));   #第一行温度范围，第二行vpd范围
+    addre = np.zeros((1, nvpd*2));
+
+    for i in range(nvpd):
+        result[0][i*2] = vpd0 + i*dVPD; 
+
+    for csv_file in os.listdir(path):
+        for i in range(m):
+            if csv_file[4:10] == pathsiteid[i]:
+                dTRE = TREdata(path + csv_file);        ##读取原始数据
+                dSameVPD = value(dTRE, vpd0, vpdn, dVPD, dvpd);       ##统计同一VPD下的T和RESP
+                for i1 in range(nvpd):
+                    [mds, nds] = dSameVPD.shape;
+                    for i2 in range(mds-2):
+                        if dSameVPD[i2+2][i1*2] != 0 and dSameVPD[i2+2][i1*2+1] != 0 and dSameVPD[i2+2][i1*2+1]>-10:
+                            result[1][i1*2] = result[1][i1*2] + 1;    #第三行用来储存该VPD范围有多少数据
+                            b = list(result[1,...]);
+                            mm = max(b);
+                            [mre,nre] = result.shape;
+                            if mm + 2 > mre:
+                                result = np.row_stack((result,addre));
+                            result[ int(result[1][i1*2]) + 2 ][i1*2 ] = 1000/(dSameVPD[i2+2][i1*2] + 273 );
+                            result[ int(result[1][i1*2]) + 2 ][i1*2 + 1] = dSameVPD[i2+2][i1*2+1];
+
     #将统计的数据保存
-    path00 = path0 + csv_file[4:10] +'.xlsx';
-    dvalue_pd = pd.DataFrame(dvalue);
-    writer1 = pd.ExcelWriter(path00);
-    dvalue_pd.to_excel(writer1, sheet_name='T+RESP');
-    writer1.save();
+    path00 = path0 + a + '.csv';
+    result_pd = pd.DataFrame(result);
+    result_pd.to_csv(path00, index= False, header= False)
+    #将统计好的数据计算平均值
 
-    #计算回归系数并汇总
-    #求回归系数
-    slopei = regression(dvalue);
-    print(slopei);
-    slope = np.row_stack((slope,slopei));
-
-path11 = 'C:/Users/Lenovo/Desktop/SameVPDslope0.5.xlsx'
-slope_pd = pd.DataFrame(slope);
-writer2 = pd.ExcelWriter(path11);
-slope_pd.to_excel(writer2, sheet_name='slope');
-writer2.save();
+    
+    
